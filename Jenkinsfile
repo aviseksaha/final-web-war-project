@@ -8,14 +8,14 @@ pipeline {
         DOMAIN_OWNER = "509399629743"
     }
     stages {
-        stage('build') {
+        stage('Build') {
             steps {
                 echo "...............build started................."
                 sh 'mvn clean install'
                 echo "...............build complete................"
             }
         }
-        stage('test') {
+        stage('Test') {
             steps {
                 echo "................unit test started................"
                 sh 'mvn surefire-report:report'
@@ -46,32 +46,32 @@ pipeline {
         }
         stage('Upload WAR to AWS CodeArtifact') {
             steps {
-                        // Authenticate Maven to CodeArtifact
-                        sh """
-                            aws codeartifact login --tool maven \
-                              --repository ${REPO_NAME} \
-                              --domain ${DOMAIN_NAME} \
-                              --domain-owner ${DOMAIN_OWNER} \
-                              --region ${AWS_REGION}
-                        """
+                // Use AWS credentials stored in Jenkins
+                withAWS(credentials: 'aws-cred', region: "${AWS_REGION}") {
+                    
+                    // Authenticate Maven to CodeArtifact
+                    sh """
+                        aws codeartifact login --tool maven \
+                          --repository ${REPO_NAME} \
+                          --domain ${DOMAIN_NAME} \
+                          --domain-owner ${DOMAIN_OWNER}
+                    """
 
-                        // Deploy WAR to CodeArtifact using Maven
-                        sh """
-                            mvn deploy:deploy-file \
-                              -DgroupId=com.example \
-                              -DartifactId=myapp \
-                              -Dversion=1.0.0 \
-                              -Dpackaging=war \
-                              -Dfile=target/myapp.war \
-                              -DrepositoryId=codeartifact \
-                              -Durl=$(aws codeartifact get-repository-endpoint \
-                                       --domain ${DOMAIN_NAME} \
-                                       --domain-owner ${DOMAIN_OWNER} \
-                                       --repository ${REPO_NAME} \
-                                       --format maven \
-                                       --region ${AWS_REGION} --query repositoryEndpoint --output text)
-                        """
-                    }
+                    // Deploy WAR to CodeArtifact using Maven
+                    sh """
+                        mvn deploy:deploy-file \
+                          -DgroupId=com.example \
+                          -DartifactId=myapp \
+                          -Dversion=1.0.0 \
+                          -Dpackaging=war \
+                          -Dfile=target/myapp.war \
+                          -DrepositoryId=codeartifact \
+                          -Durl=$(aws codeartifact get-repository-endpoint \
+                                   --domain ${DOMAIN_NAME} \
+                                   --domain-owner ${DOMAIN_OWNER} \
+                                   --repository ${REPO_NAME} \
+                                   --format maven --query repositoryEndpoint --output text)
+                    """
                 }
             }
         }
