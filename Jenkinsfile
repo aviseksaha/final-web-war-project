@@ -50,16 +50,13 @@ pipeline {
                 withAWS(credentials: 'aws-cred', region: "${AWS_REGION}") {
                     
                     // Authenticate Maven to CodeArtifact
-                    sh """
-                        aws codeartifact login --tool maven \
+                    sh """aws codeartifact login --tool maven \
                           --repository ${REPO_NAME} \
                           --domain ${DOMAIN_NAME} \
-                          --domain-owner ${DOMAIN_OWNER}
-                    """
+                          --domain-owner ${DOMAIN_OWNER}"""
 
                     // Deploy WAR to CodeArtifact using Maven
-                    sh """
-                        mvn deploy:deploy-file \
+                    sh """mvn deploy:deploy-file \
                           -DgroupId=com.example \
                           -DartifactId=myapp \
                           -Dversion=1.0.0 \
@@ -70,8 +67,7 @@ pipeline {
                                    --domain ${DOMAIN_NAME} \
                                    --domain-owner ${DOMAIN_OWNER} \
                                    --repository ${REPO_NAME} \
-                                   --format maven --query repositoryEndpoint --output text)
-                    """
+                                   --format maven --query repositoryEndpoint --output text)"""
                 }
             }
         }
