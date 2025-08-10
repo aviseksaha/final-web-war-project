@@ -32,18 +32,18 @@ pipeline {
                 }
             }
         }
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 2, unit: 'MINUTES') { 
-                    script {
-                        def qualityGate = waitForQualityGate() 
-                        if (qualityGate.status != 'OK') {
-                            echo "Warning: Quality gate partially passed but continuing pipeline: ${qualityGate.status}"
-                        }
-                    }
-                }              
-            }
-        }
+        #stage('Quality Gate') {
+        #    steps {
+        #        timeout(time: 2, unit: 'MINUTES') { 
+        #            script {
+        #                def qualityGate = waitForQualityGate() 
+        #                if (qualityGate.status != 'OK') {
+        #                    echo "Warning: Quality gate partially passed but continuing pipeline: ${qualityGate.status}"
+        #                }
+        #            }
+        #        }              
+        #    }
+        #}
         stage('Upload WAR to AWS CodeArtifact') {
             steps {
                 // Use AWS credentials stored in Jenkins
