@@ -29,7 +29,6 @@ pipeline {
             }
         }
         stage('Quality Gate') {
-            steps {stage('Quality Gate') {
             steps {
                 timeout(time: 2, unit: 'MINUTES') { 
                     script {
@@ -40,8 +39,7 @@ pipeline {
                                 }
                             }
                         }              
-                    }
-		        }
+                 }
             }
         }
     }
