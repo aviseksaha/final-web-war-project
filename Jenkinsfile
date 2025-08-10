@@ -38,41 +38,40 @@ pipeline {
                     script {
                         def qualityGate = waitForQualityGate() 
                         if (qualityGate.status != 'OK') {
-                            //error "Pipeline failed due to quality gate failure: ${qualityGate.status}"
-							echo "Warning: Quality gate partially passed but continuing pipeline:${qualityGate.status}"
-                                }
-                            }
-                        }              
+                            echo "Warning: Quality gate partially passed but continuing pipeline: ${qualityGate.status}"
+                        }
                     }
-                }
+                }              
+            }
+        }
         stage('Upload WAR to AWS CodeArtifact') {
             steps {
-                script {
-                    // Authenticate Maven to CodeArtifact
-                    sh """
-                        aws codeartifact login --tool maven \
-                          --repository $REPO_NAME \
-                          --domain $DOMAIN_NAME \
-                          --domain-owner $DOMAIN_OWNER \
-                          --region $AWS_REGION
-                    """
+                        // Authenticate Maven to CodeArtifact
+                        sh """
+                            aws codeartifact login --tool maven \
+                              --repository ${REPO_NAME} \
+                              --domain ${DOMAIN_NAME} \
+                              --domain-owner ${DOMAIN_OWNER} \
+                              --region ${AWS_REGION}
+                        """
 
-                    // Deploy WAR to CodeArtifact using Maven
-                    sh """
-                        mvn deploy:deploy-file \
-                          -DgroupId=com.example \
-                          -DartifactId=myapp \
-                          -Dversion=1.0.0 \
-                          -Dpackaging=war \
-                          -Dfile=target/myapp.war \
-                          -DrepositoryId=codeartifact \
-                          -Durl=$(aws codeartifact get-repository-endpoint \
-                                   --domain $DOMAIN_NAME \
-                                   --domain-owner $DOMAIN_OWNER \
-                                   --repository $REPO_NAME \
-                                   --format maven \
-                                   --region $AWS_REGION --query repositoryEndpoint --output text)
-                    """
+                        // Deploy WAR to CodeArtifact using Maven
+                        sh """
+                            mvn deploy:deploy-file \
+                              -DgroupId=com.example \
+                              -DartifactId=myapp \
+                              -Dversion=1.0.0 \
+                              -Dpackaging=war \
+                              -Dfile=target/myapp.war \
+                              -DrepositoryId=codeartifact \
+                              -Durl=$(aws codeartifact get-repository-endpoint \
+                                       --domain ${DOMAIN_NAME} \
+                                       --domain-owner ${DOMAIN_OWNER} \
+                                       --repository ${REPO_NAME} \
+                                       --format maven \
+                                       --region ${AWS_REGION} --query repositoryEndpoint --output text)
+                        """
+                    }
                 }
             }
         }
