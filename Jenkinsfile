@@ -66,7 +66,7 @@ pipeline {
                           -Dpackaging=war \
                           -Dfile=target/myapp.war \
                           -DrepositoryId=codeartifact \
-                          -Durl=$(aws codeartifact get-repository-endpoint \
+                          -Durl=\$(aws codeartifact get-repository-endpoint \
                                    --domain ${DOMAIN_NAME} \
                                    --domain-owner ${DOMAIN_OWNER} \
                                    --repository ${REPO_NAME} \
