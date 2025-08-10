@@ -6,18 +6,18 @@ pipeline {
     stages {
         stage('build') {
             steps {
-		echo "...............build started................."
+                echo "...............build started................."
                 sh 'mvn clean install'
-		echo "...............build complete................"
+                echo "...............build complete................"
             }
         }
-	stage('test') {
-	    steps {
-	    	echo "................unit test started................"
-		sh 'mvn surefire-report:report'
-		echo "...............unit test completed..............."
-	    }
-	}
+        stage('test') {
+            steps {
+                echo "................unit test started................"
+                sh 'mvn surefire-report:report'
+                echo "...............unit test completed..............."
+            }
+        }
         stage('SonarQube analysis') {
             environment {
                 scannerHome = tool 'Saidemy-sonar-scanner'
@@ -28,19 +28,21 @@ pipeline {
                 }
             }
         }
-	stage('Quality Gate') {
+        stage('Quality Gate') {
+            steps {stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'HOURS') { 
+                timeout(time: 2, unit: 'MINUTES') { 
                     script {
                         def qualityGate = waitForQualityGate() 
                         if (qualityGate.status != 'OK') {
                             //error "Pipeline failed due to quality gate failure: ${qualityGate.status}"
 							echo "Warning: Quality gate partially passed but continuing pipeline:${qualityGate.status}"
-                        }
+                                }
+                            }
+                        }              
                     }
-                }
+		        }
             }
-	}
+        }
     }
 }
-
