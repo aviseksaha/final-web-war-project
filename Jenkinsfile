@@ -33,32 +33,55 @@ pipeline {
             }
         }
         stage('Upload WAR to AWS CodeArtifact') {
-            steps {
-                // Use AWS credentials stored in Jenkins
-                withAWS(credentials: 'aws-cred', region: "${AWS_REGION}") {
-                    
-                    // Authenticate Maven to CodeArtifact
-                    sh """aws codeartifact login --tool maven \
-                          --repository ${REPO_NAME} \
-                          --domain ${DOMAIN_NAME} \
-                          --domain-owner ${DOMAIN_OWNER}"""
+			steps {
+				withAWS(credentials: 'aws-cred', region: "${AWS_REGION}") {
+					// Fetch CodeArtifact repository endpoint
+					sh """
+						REPO_ENDPOINT=\$(aws codeartifact get-repository-endpoint \
+							--domain ${DOMAIN_NAME} \
+							--domain-owner ${DOMAIN_OWNER} \
+							--repository ${REPO_NAME} \
+							--format maven --query repositoryEndpoint --output text)
+					"""
 
-                    // Deploy WAR to CodeArtifact using Maven
-                    sh """mvn deploy:deploy-file \
-                          -DgroupId=com.example \
-                          -DartifactId=myapp \
-                          -Dversion=1.0.0 \
-                          -Dpackaging=war \
-                          -Dfile=target/myapp.war \
-                          -DrepositoryId=codeartifact \
-                          -Durl=\$(aws codeartifact get-repository-endpoint \
-                                   --domain ${DOMAIN_NAME} \
-                                   --domain-owner ${DOMAIN_OWNER} \
-                                   --repository ${REPO_NAME} \
-                                   --format maven --query repositoryEndpoint --output text)"""
-                }
-            }
-        }
+					// Fetch CodeArtifact authorization token
+					sh """
+						AUTH_TOKEN=\$(aws codeartifact get-authorization-token \
+							--domain ${DOMAIN_NAME} \
+							--domain-owner ${DOMAIN_OWNER} \
+							--query authorizationToken --output text)
+					"""
+
+					// Create Maven settings.xml with CodeArtifact credentials
+					sh """
+						mkdir -p ~/.m2
+						cat > ~/.m2/settings.xml << EOF
+						<settings>
+							<servers>
+								<server>
+									<id>codeartifact</id>
+									<username>aws</username>
+									<password>\${AUTH_TOKEN}</password>
+								</server>
+							</servers>
+						</settings>
+						EOF
+					"""
+
+					// Deploy WAR to CodeArtifact using Maven
+					sh """
+						mvn deploy:deploy-file \
+							-DgroupId=com.example \
+							-DartifactId=myapp \
+							-Dversion=1.0.0 \
+							-Dpackaging=war \
+							-Dfile=target/myapp.war \
+							-DrepositoryId=codeartifact \
+							-Durl=\${REPO_ENDPOINT}
+					"""
+				}
+			}
+		}
     }
 }
 
